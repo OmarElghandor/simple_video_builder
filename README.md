@@ -125,8 +125,10 @@ The app ships as a single Docker container: the Express backend serves the built
 ### Setup
 
 1. Create a new Railway project and connect this repository.
-2. Railway reads `railway.toml`, which points the build at the root `Dockerfile`.
-3. In the Railway service **Variables** tab, set:
+2. **Important:** Railway deploys from your git repository. The `Dockerfile`, `railway.toml`, and all app code must be committed and pushed — if only `README.md` is on the remote branch, Railway will fall back to Railpack and the build will fail.
+3. In the Railway service **Settings → Build**, confirm **Root Directory** is empty (repo root) and the builder is **Dockerfile**.
+4. Railway reads `railway.toml` / `railway.json`, which point the build at the root `Dockerfile`.
+5. In the Railway service **Variables** tab, set:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
