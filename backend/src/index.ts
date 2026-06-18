@@ -7,18 +7,24 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateRouter } from './routes/generate';
 import { videosRouter } from './routes/videos';
+import {
+  backendRoot,
+  getOutputRoot,
+  getPublicDir,
+  getVideosDir,
+} from './paths';
+import { usesCloudinaryStorage } from './services/videos';
 import { warmupRemotionBundle } from './services/remotion';
 
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const backendRoot = path.resolve(__dirname, '..');
 const port = Number(process.env.PORT ?? 3001);
 
 async function ensureDirectories(): Promise<void> {
-  await mkdir(path.join(backendRoot, 'output', 'audio'), { recursive: true });
-  await mkdir(path.join(backendRoot, 'output', 'videos'), { recursive: true });
-  await mkdir(path.join(backendRoot, 'public', 'audio'), { recursive: true });
+  await mkdir(path.join(getOutputRoot(), 'audio'), { recursive: true });
+  await mkdir(getVideosDir(), { recursive: true });
+  await mkdir(path.join(getPublicDir(), 'audio'), { recursive: true });
 }
 
 async function startServer(): Promise<void> {
@@ -28,10 +34,14 @@ async function startServer(): Promise<void> {
 
   app.use(cors());
   app.use(express.json({ limit: '1mb' }));
-  app.use('/output', express.static(path.join(backendRoot, 'output')));
+  app.use('/output', express.static(getOutputRoot()));
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      videoStorage: usesCloudinaryStorage() ? 'cloudinary' : 'local',
+      videosPath: getVideosDir(),
+    });
   });
 
   app.use('/api', generateRouter);
@@ -53,6 +63,14 @@ async function startServer(): Promise<void> {
 
   const server = app.listen(port, () => {
     console.log(`Backend listening on http://localhost:${port}`);
+    if (usesCloudinaryStorage()) {
+      console.log('Video storage: Cloudinary');
+    } else {
+      console.log(`Video storage: local (${getVideosDir()})`);
+      console.warn(
+        'Cloudinary is not configured — videos are stored locally and may be lost on redeploy.',
+      );
+    }
   });
 
   server.timeout = 0;

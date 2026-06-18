@@ -2,13 +2,15 @@ import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 import { cp, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+  backendRoot,
+  getPublicDir,
+  getVideosDir,
+} from '../paths';
 import type { LessonScript, LessonVideoProps, SceneWithAudio } from '../types';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const backendRoot = path.resolve(__dirname, '../..');
 const remotionEntry = path.join(backendRoot, 'remotion', 'index.ts');
-const publicDir = path.join(backendRoot, 'public');
+const publicDir = getPublicDir();
 
 let cachedBundleOutDir: string | null = null;
 
@@ -46,7 +48,7 @@ export async function renderLessonVideo(
   const bundleOutDir = await warmupRemotionBundle();
   await syncRequestAudioToBundle(bundleOutDir, requestId);
 
-  const videosDir = path.join(backendRoot, 'output', 'videos');
+  const videosDir = getVideosDir();
   await mkdir(videosDir, { recursive: true });
 
   const outputLocation = path.join(videosDir, `${requestId}.mp4`);

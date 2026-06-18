@@ -1,13 +1,13 @@
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseFile } from 'music-metadata';
 import { FPS } from '../constants';
+import {
+  getOutputAudioDir,
+  getPublicAudioDir,
+} from '../paths';
 import type { SceneWithAudio, ScriptScene } from '../types';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const backendRoot = path.resolve(__dirname, '../..');
 
 function getClient(): ElevenLabsClient {
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -65,8 +65,8 @@ export async function generateAllAudio(
   const voiceId = getVoiceId();
   const modelId = process.env.ELEVENLABS_MODEL ?? 'eleven_multilingual_v2';
 
-  const outputAudioDir = path.join(backendRoot, 'output', 'audio', requestId);
-  const publicAudioDir = path.join(backendRoot, 'public', 'audio', requestId);
+  const outputAudioDir = getOutputAudioDir(requestId);
+  const publicAudioDir = getPublicAudioDir(requestId);
   await mkdir(outputAudioDir, { recursive: true });
   await mkdir(publicAudioDir, { recursive: true });
 

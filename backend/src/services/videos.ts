@@ -1,10 +1,16 @@
 import { readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const backendRoot = path.resolve(__dirname, '../..');
-const videosDir = path.join(backendRoot, 'output', 'videos');
+import {
+  deleteCloudinaryVideo,
+  isCloudinaryConfigured,
+  listCloudinaryVideos,
+  uploadVideo,
+} from './cloudinary';
+import {
+  getOutputAudioDir,
+  getPublicAudioDir,
+  getVideosDir,
+} from '../paths';
 
 export type VideoMetadata = {
   title: string;
@@ -22,11 +28,11 @@ export type VideoListItem = {
 };
 
 function getVideoPath(id: string): string {
-  return path.join(videosDir, `${id}.mp4`);
+  return path.join(getVideosDir(), `${id}.mp4`);
 }
 
 function getMetadataPath(id: string): string {
-  return path.join(videosDir, `${id}.meta.json`);
+  return path.join(getVideosDir(), `${id}.meta.json`);
 }
 
 function isValidVideoId(id: string): boolean {
@@ -49,7 +55,8 @@ async function readVideoMetadata(id: string): Promise<VideoMetadata | null> {
   }
 }
 
-export async function listVideos(): Promise<VideoListItem[]> {
+async function listLocalVideos(): Promise<VideoListItem[]> {
+  const videosDir = getVideosDir();
   let entries: string[];
 
   try {
@@ -82,11 +89,7 @@ export async function listVideos(): Promise<VideoListItem[]> {
   );
 }
 
-export async function deleteVideo(id: string): Promise<boolean> {
-  if (!isValidVideoId(id)) {
-    return false;
-  }
-
+async function deleteLocalVideo(id: string): Promise<boolean> {
   const videoPath = getVideoPath(id);
   try {
     await stat(videoPath);
@@ -96,14 +99,47 @@ export async function deleteVideo(id: string): Promise<boolean> {
 
   await rm(videoPath, { force: true });
   await rm(getMetadataPath(id), { force: true });
-  await rm(path.join(backendRoot, 'output', 'audio', id), {
-    recursive: true,
-    force: true,
-  });
-  await rm(path.join(backendRoot, 'public', 'audio', id), {
-    recursive: true,
-    force: true,
-  });
+  await rm(getOutputAudioDir(id), { recursive: true, force: true });
+  await rm(getPublicAudioDir(id), { recursive: true, force: true });
 
   return true;
+}
+
+export async function publishVideo(
+  id: string,
+  metadata: VideoMetadata,
+): Promise<string> {
+  if (!isCloudinaryConfigured()) {
+    await saveVideoMetadata(id, metadata);
+    return `/output/videos/${id}.mp4`;
+  }
+
+  const localPath = getVideoPath(id);
+  const cloudUrl = await uploadVideo(localPath, id, metadata);
+  await deleteLocalVideo(id);
+  return cloudUrl;
+}
+
+export async function listVideos(): Promise<VideoListItem[]> {
+  if (isCloudinaryConfigured()) {
+    return listCloudinaryVideos();
+  }
+
+  return listLocalVideos();
+}
+
+export async function deleteVideo(id: string): Promise<boolean> {
+  if (!isValidVideoId(id)) {
+    return false;
+  }
+
+  if (isCloudinaryConfigured()) {
+    return deleteCloudinaryVideo(id);
+  }
+
+  return deleteLocalVideo(id);
+}
+
+export function usesCloudinaryStorage(): boolean {
+  return isCloudinaryConfigured();
 }

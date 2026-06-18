@@ -135,14 +135,21 @@ The app ships as a single Docker container: the Express backend serves the built
 | `ANTHROPIC_API_KEY` | Yes | Anthropic API key for Claude script generation |
 | `ELEVENLABS_API_KEY` | Yes | ElevenLabs API key for narration |
 | `ELEVENLABS_VOICE_ID` | Yes | Voice ID from your ElevenLabs account |
+| `CLOUDINARY_URL` | Recommended | Single connection URL from Cloudinary dashboard, e.g. `cloudinary://API_KEY:API_SECRET@CLOUD_NAME` |
+
+Alternatively, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` separately.
 
 Optional variables (same as local `.env`): `CLAUDE_MODEL`, `ELEVENLABS_MODEL`.
 
 Railway injects `PORT` automatically — do not set it manually.
 
-### Storage (ephemeral)
+### Video storage (Cloudinary)
 
-Generated audio and video files are written to local folders inside the container (`backend/output/` and `backend/public/audio/`), exactly as in local development. **On Railway this storage is ephemeral**: files can disappear on redeploy, restart, or when the container is replaced. That is an accepted limitation for this demo — do not rely on persisted videos between deployments.
+When `CLOUDINARY_URL` (or all three separate `CLOUDINARY_*` variables) is set, finished MP4s are uploaded to Cloudinary after rendering and served from a permanent HTTPS URL.
+
+Without Cloudinary, videos are stored locally in `backend/output/videos/` inside the container. **That local storage is ephemeral on Railway** and will be empty after a redeploy.
+
+Get your Cloudinary credentials from the [Cloudinary Console](https://console.cloudinary.com/) → Dashboard.
 
 ### Memory and CPU
 

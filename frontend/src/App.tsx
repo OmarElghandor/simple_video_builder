@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 
 type GenerateResponse = {
+  id?: string;
   videoUrl?: string;
   title?: string;
   sceneCount?: number;
@@ -33,6 +34,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [videos, setVideos] = useState<VideoListItem[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -74,6 +76,7 @@ function App() {
     setError(null);
     setVideoUrl(null);
     setTitle(null);
+    setCurrentVideoId(null);
 
     try {
       const response = await fetch('/api/generate', {
@@ -94,6 +97,7 @@ function App() {
 
       setVideoUrl(data.videoUrl);
       setTitle(data.title ?? null);
+      setCurrentVideoId(data.id ?? null);
       await loadVideos();
     } catch (err) {
       const message =
@@ -120,9 +124,10 @@ function App() {
         throw new Error(data.error ?? 'Failed to delete video.');
       }
 
-      if (videoUrl?.includes(`${id}.mp4`)) {
+      if (currentVideoId === id) {
         setVideoUrl(null);
         setTitle(null);
+        setCurrentVideoId(null);
       }
 
       await loadVideos();

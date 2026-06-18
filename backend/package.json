@@ -14,6 +14,7 @@
     "@elevenlabs/elevenlabs-js": "^2.12.2",
     "@remotion/bundler": "4.0.286",
     "@remotion/renderer": "4.0.286",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
