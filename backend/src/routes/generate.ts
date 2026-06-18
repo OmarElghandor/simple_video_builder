@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { generateScript } from '../services/claude';
 import { generateAllAudio } from '../services/elevenlabs';
 import { renderLessonVideo } from '../services/remotion';
+import { saveVideoMetadata } from '../services/videos';
 
 export const generateRouter = Router();
 
@@ -27,6 +28,12 @@ generateRouter.post('/generate', async (req, res) => {
 
     const videoUrl = await renderLessonVideo(script, scenesWithAudio, requestId);
     console.log(`Video ready for request ${requestId}: ${videoUrl}`);
+
+    await saveVideoMetadata(requestId, {
+      title: script.title,
+      sceneCount: script.scenes.length,
+      createdAt: new Date().toISOString(),
+    });
 
     return res.json({
       videoUrl,

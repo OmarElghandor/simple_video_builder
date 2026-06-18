@@ -6,6 +6,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateRouter } from './routes/generate';
+import { videosRouter } from './routes/videos';
 import { warmupRemotionBundle } from './services/remotion';
 
 dotenv.config();
@@ -34,6 +35,7 @@ async function startServer(): Promise<void> {
   });
 
   app.use('/api', generateRouter);
+  app.use('/api', videosRouter);
 
   const frontendDist = path.join(backendRoot, 'frontend-dist');
   if (existsSync(frontendDist)) {
